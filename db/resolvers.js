@@ -1,4 +1,5 @@
 const Usuario = require('../models/Usuario');
+const Producto = require('../models/Producto');
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -16,6 +17,23 @@ const resolvers = {
 			const usuarioid = await jwt.verify(token, process.env.SECRET);
 
 			return usuarioid;
+		},
+		obtenerProductos: async () => {
+			try {
+				const productos = await Producto.find({});
+				return productos;
+			} catch (error) {
+				console.log(error);
+			}
+		},
+		obtenerProducto: async (_, { id }) => {
+			const producto = await Producto.findById(id);
+
+			if (!producto) {
+				throw new Error('Producto no encontrado');
+			}
+
+			return producto;
 		}
 	},
 	Mutation: {
@@ -60,6 +78,40 @@ const resolvers = {
 			return {
 				token: crearToken(existeUsuario, process.env.SECRET, '24h')
 			};
+		},
+		nuevoProducto: async (_, { input }) => {
+			try {
+				const producto = new Producto(input);
+
+				// almacenar en la base de datos
+				const resultado = await producto.save();
+
+				return resultado;
+			} catch (error) {
+				console.log(error);
+			}
+		},
+		actualizarProducto: async (_, { id, input }) => {
+			let producto = await Producto.findById(id);
+
+			if (!producto) {
+				throw new Error('Producto no encontrado');
+			}
+
+			producto = await Producto.findOneAndUpdate({ _id: id }, input, { new: true });
+
+			return producto;
+		},
+		eliminarProducto: async (_, { id }) => {
+			let producto = await Producto.findById(id);
+
+			if (!producto) {
+				throw new Error('Producto no encontrado');
+			}
+
+			await Producto.findOneAndDelete({ _id: id });
+
+			return 'Producto eliminado.';
 		}
 	}
 };
