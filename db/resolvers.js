@@ -1,5 +1,6 @@
 const Usuario = require('../models/Usuario');
 const Producto = require('../models/Producto');
+const Cliente = require('../models/Cliente');
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -34,6 +35,36 @@ const resolvers = {
 			}
 
 			return producto;
+		},
+		obtenerClientes: async () => {
+			try {
+				const clientes = await Cliente.find({});
+				return clientes;
+			} catch (error) {
+				console.log(error);
+			}
+		},
+		obtenerClientesVendedor: async (_, {}, ctx) => {
+			try {
+				const clientes = await Cliente.find({ vendedor: ctx.usuario.id.toString() });
+				return clientes;
+			} catch (error) {
+				console.log(error);
+			}
+		},
+		obtenerCliente: async (_, { id }, ctx) => {
+			// revisar si el cliente existe o no
+			const cliente = await Cliente.findById(id);
+			if (!cliente) {
+				throw new Error('Cliente no encontrado.');
+			}
+
+			// quien lo creó puede verlo
+			if (cliente.vendedor.toString() !== ctx.usuario.id) {
+				throw new Error('No tienes las credenciales.');
+			}
+
+			return cliente;
 		}
 	},
 	Mutation: {
@@ -53,7 +84,7 @@ const resolvers = {
 			// guardarlo en la base de datos
 			try {
 				const usuario = new Usuario(input);
-				usuario.save();
+				await usuario.save();
 				return usuario;
 			} catch (error) {
 				console.log(error);
@@ -112,6 +143,61 @@ const resolvers = {
 			await Producto.findOneAndDelete({ _id: id });
 
 			return 'Producto eliminado.';
+		},
+		nuevoCliente: async (_, { input }, ctx) => {
+			const { email } = input;
+
+			// verificar si el cliente ya está registrado
+			const cliente = await Cliente.findOne({ email });
+			if (cliente) {
+				throw new Error('Ese cliente ya está registrado.');
+			}
+
+			const clienteNuevo = new Cliente(input);
+
+			// asignar el vendedor
+			clienteNuevo.vendedor = ctx.usuario.id;
+
+			// guardarlo en la base de datos
+			try {
+				return await clienteNuevo.save();
+			} catch (error) {
+				console.log(error);
+			}
+		},
+		actualizarCliente: async (_, { id, input }, ctx) => {
+			// verificar si existe o no
+			let cliente = await Cliente.findById(id);
+
+			if (!cliente) {
+				throw new Error('Ese cliente no existe');
+			}
+
+			// verificar si el vendedor es quien edita
+			if (cliente.vendedor.toString() !== ctx.usuario.id) {
+				throw new Error('No tienes las credenciales.');
+			}
+
+			// guardar el cliente
+			cliente = await Cliente.findOneAndUpdate({ _id: id }, input, { new: true });
+			return cliente;
+		},
+		eliminarCliente: async (_, { id }, ctx) => {
+			// verificar si existe o no
+			let cliente = await Cliente.findById(id);
+
+			if (!cliente) {
+				throw new Error('Ese cliente no existe');
+			}
+
+			// verificar si el vendedor es quien edita
+			if (cliente.vendedor.toString() !== ctx.usuario.id) {
+				throw new Error('No tienes las credenciales.');
+			}
+
+			await Cliente.findOneAndDelete({ _id: id });
+
+			return 'Cliente eliminado.';
 		}
 	}
 };
