@@ -42,7 +42,7 @@ const typeDefs = gql`
 		total: Float
 		cliente: ID
 		vendedor: ID
-		fecha: String
+		creado: String
 		estado: EstadoPedido
 	}
 
