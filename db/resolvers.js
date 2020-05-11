@@ -156,6 +156,10 @@ const resolvers = {
 			]);
 
 			return vendedores;
+		},
+		buscarProducto: async () => {
+			const productos = await Producto.find({ $text: { $search: texto } });
+			return productos;
 		}
 	},
 	Mutation: {
