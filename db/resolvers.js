@@ -121,6 +121,9 @@ const resolvers = {
 					}
 				},
 				{
+					$limit: 10
+				},
+				{
 					$sort: { total: -1 }
 				}
 			]);
