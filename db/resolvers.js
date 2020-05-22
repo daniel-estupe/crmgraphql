@@ -9,17 +9,15 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: 'variables.env' });
 
 const crearToken = (usuario, secret, expiresIn) => {
-	const { id, email, nombre, apellido } = usuario;
+	const { id, email, nombre, apellido, empresa } = usuario;
 
-	return jwt.sign({ id, email }, secret, { expiresIn });
+	return jwt.sign({ id, nombre, apellido, email, empresa }, secret, { expiresIn });
 };
 
 const resolvers = {
 	Query: {
-		obtenerUsuario: async (_, { token }) => {
-			const usuarioid = await jwt.verify(token, process.env.SECRET);
-
-			return usuarioid;
+		obtenerUsuario: async (_, {}, ctx) => {
+			return ctx.usuario;
 		},
 		obtenerProductos: async () => {
 			try {
