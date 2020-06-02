@@ -9,9 +9,13 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: 'variables.env' });
 
 const crearToken = (usuario, secret, expiresIn) => {
-	const { id, email, nombre, apellido, empresa } = usuario;
+	try {
+		const { id, email, nombre, apellido, empresa } = usuario;
 
-	return jwt.sign({ id, nombre, apellido, email, empresa }, secret, { expiresIn });
+		return jwt.sign({ id, nombre, apellido, email, empresa }, secret, { expiresIn });
+	} catch (error) {
+		console.log('no tiene token');
+	}
 };
 
 const resolvers = {
@@ -76,7 +80,7 @@ const resolvers = {
 		},
 		obtenerPedidosVendedor: async (_, {}, ctx) => {
 			try {
-				const pedidos = await Pedido.find({ vendedor: ctx.usuario.id });
+				const pedidos = await Pedido.find({ vendedor: ctx.usuario.id }).populate('cliente');
 				return pedidos;
 			} catch (error) {
 				console.log(pedidos);
